@@ -1,5 +1,7 @@
-import ProfilePg from "@/components/profilepage";
 import { auth } from "@clerk/nextjs/server";
+import dynamic from "next/dynamic";
+
+const ProfilePg = dynamic(() => import("@/components/profilepage"), { ssr: false });
 
 interface ProfilePageProps {
   params: {
@@ -7,7 +9,7 @@ interface ProfilePageProps {
   };
 }
 
-export default async function ProfileId({ params }: ProfilePageProps) {
-  const { userId: clerkId } = await auth();
-  return <ProfilePg usermId={params.id} clerkId={clerkId || null} />;
+export default async function ProfileIdPage({ params }: ProfilePageProps) {
+  const { userId } = await auth();
+  return <ProfilePg usermId={params.id} clerkId={userId ?? null} />;
 }
