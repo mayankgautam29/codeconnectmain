@@ -30,13 +30,14 @@ interface Post {
 
 export default function HomePage() {
   const [data, setData] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     const getData = async () => {
       try {
+        setLoading(true);
         const res = await axios.post("/api/main");
         setData(res.data.posts || []);
         setUserId(res.data.usrId);
@@ -87,6 +88,11 @@ export default function HomePage() {
 
   return (
     <div className="max-w-6xl mx-auto mt-12 px-4">
+      {loading ? (
+        <div className="text-lg font-semibold text-white">Loading posts</div>
+      ) : (
+        ""
+      )}
       {Array.isArray(data) && data.length > 0 ? (
         <div className="space-y-10">
           {data.map((post) => (
