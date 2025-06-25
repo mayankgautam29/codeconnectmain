@@ -89,11 +89,8 @@ export default function HomePage() {
   return (
     <div className="max-w-6xl mx-auto mt-12 px-4">
       {loading ? (
-        <div className="text-lg font-semibold text-white">Loading posts</div>
-      ) : (
-        ""
-      )}
-      {Array.isArray(data) && data.length > 0 ? (
+        <div className="text-lg font-semibold text-white">Loading posts...</div>
+      ) : Array.isArray(data) && data.length > 0 ? (
         <div className="space-y-10">
           {data.map((post) => (
             <div
