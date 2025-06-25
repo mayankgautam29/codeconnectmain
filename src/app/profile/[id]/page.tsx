@@ -1,20 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
-import ProfilePg from "@/components/profilepage"; // already a "use client" component
+import ProfilePg from "@/components/profilepage";
 
-interface ProfilePageProps {
+interface PageProps {
   params: {
     id: string;
   };
 }
 
-export default async function ProfileIdPage({ params }: ProfilePageProps) {
+export default async function ProfileIdPage({ params }: PageProps) {
   const { userId } = await auth();
-  const clerkId = userId ?? null;
-
-  return (
-    <ProfilePg
-      usermId={params.id}
-      clerkId={clerkId}
-    />
-  );
+  return <ProfilePg usermId={params.id} clerkId={userId ?? null} />;
 }
