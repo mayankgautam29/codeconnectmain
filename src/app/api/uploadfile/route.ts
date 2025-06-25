@@ -6,6 +6,14 @@ import { auth } from "@clerk/nextjs/server";
 import User from "@/models/userModel";
 import type { UploadApiResponse } from "cloudinary";
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "50mb",
+    },
+  },
+};
+
 export async function POST(req: NextRequest) {
   try {
     await connect();
@@ -36,20 +44,19 @@ export async function POST(req: NextRequest) {
       }) as UploadApiResponse;
 
       urls.push(result.secure_url);
+      await new Promise(res => setTimeout(res, 300));
     }
-
     const newPost = new Post({
       userId: user._id,
       imageUrl: urls,
       caption,
     });
-
     await newPost.save();
 
     return NextResponse.json({ urls }, { status: 200 });
 
   } catch (err: any) {
-    console.error("Upload error:", err);
+    console.error("❌ Upload error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
