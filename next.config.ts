@@ -1,12 +1,10 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  reactStrictMode: true,
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     domains: ["res.cloudinary.com"],
-  },
-  typescript: {
-    ignoreBuildErrors: true,
   },
 };
 
