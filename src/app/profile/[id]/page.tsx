@@ -1,28 +1,25 @@
-import { auth } from "@clerk/nextjs/server";
-import dynamicImport from "next/dynamic";
+"use client";
 
-// ✅ This is the client component dynamically imported
-const ProfilePg = dynamicImport(() => import("@/components/profilepage"), {
-  ssr: false,
-});
+import { useEffect, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useParams } from "next/navigation";
+import ProfilePg from "@/components/profilepage";
 
-// ✅ Rename this to avoid conflict with import
-export const dynamicSetting = "force-dynamic";
+export default function ProfileIdPage() {
+  const { userId } = useAuth();
+  const { id } = useParams();
 
-// ✅ Dynamic route type
-type PageProps = {
-  params: {
-    id: string;
-  };
-};
+  const [clerkId, setClerkId] = useState<string | null>(null);
 
-export default async function ProfileIdPage({ params }: PageProps) {
-  const { userId } = await auth();
+  useEffect(() => {
+    if (userId) setClerkId(userId);
+  }, [userId]);
+  if (!id || typeof id !== "string") return <div>Invalid ID</div>;
 
   return (
     <ProfilePg
-      usermId={params.id}
-      clerkId={userId ?? null}
+      usermId={id}
+      clerkId={clerkId}
     />
   );
 }
