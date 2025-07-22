@@ -10,7 +10,7 @@ import {
   Plus,
   LogOut,
   LogIn,
-  Search
+  Search,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -52,8 +52,11 @@ export function ResponsiveSidebar() {
         isCollapsed ? "w-16" : "w-64"
       )}
       style={{
-        background:
-          "linear-gradient(to bottom right, #2b2e4a, #1e202e, #0f1123)",
+        background: "linear-gradient(145deg, #0f172a, #1e1b4b, #111827)",
+        boxShadow: "0 0 30px rgba(0, 0, 0, 0.5)",
+        border: "1px solid rgba(255, 255, 255, 0.05)",
+        borderRadius: "1rem",
+        opacity: 0.96,
       }}
     >
       <div className="flex items-center justify-between p-4 border-b border-white/10">

@@ -4,6 +4,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ResponsiveSidebar } from "@/app/components/ResponsiveSidebar";
 import { ParticleBackground } from "@/components/particleBackground";
+import WavyBackground from "@/components/background";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,12 +30,14 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className="scroll-smooth">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased text-white relative`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased text-white relative bg-black`}
         >
-          <ParticleBackground />
+          <WavyBackground />
+
           <div className="min-h-screen flex flex-col md:flex-row relative z-10">
             <ResponsiveSidebar />
-            <main className="flex-1 p-6 md:p-10 overflow-auto">
+
+            <main className="flex-1 p-6 md:p-10 overflow-auto m-4 md:my-8 md:mr-8">
               <h1 className="text-4xl font-extrabold mb-2 tracking-tight">
                 CodeConnect
               </h1>
@@ -46,3 +49,4 @@ export default function RootLayout({
     </ClerkProvider>
   );
 }
+
