@@ -31,10 +31,14 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: -2;
-  background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a);
-  background-size: 400% 400%;
-  animation: bgShift 20s ease infinite;
-  opacity: 0.6;
+  background:
+    radial-gradient(circle at 12% 16%, rgba(0, 179, 255, 0.14), transparent 36%),
+    radial-gradient(circle at 85% 20%, rgba(81, 98, 255, 0.2), transparent 38%),
+    radial-gradient(circle at 55% 100%, rgba(25, 145, 255, 0.17), transparent 34%),
+    linear-gradient(140deg, #060a13 0%, #0b1220 48%, #0a0f1a 100%);
+  background-size: 135% 135%;
+  animation: bgShift 28s ease infinite;
+  opacity: 0.9;
 }
 
 body::after {
@@ -43,7 +47,7 @@ body::after {
   inset: 0;
   z-index: -1;
   background-image: url("https://grainy-gradients.vercel.app/noise.svg");
-  opacity: 0.05;
+  opacity: 0.07;
   mix-blend-mode: overlay;
   pointer-events: none;
 }
@@ -66,6 +70,25 @@ body::after {
   background: linear-gradient(-45deg, #ff6ec4, #7873f5, #1fd1f9, #c3cfe2);
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
+}
+
+.main-shell {
+  transition: padding-left 0.3s ease;
+}
+
+.sidebar-expanded .main-shell {
+  padding-left: 330px;
+}
+
+.sidebar-collapsed .main-shell {
+  padding-left: 138px;
+}
+
+@media (max-width: 767px) {
+  .sidebar-expanded .main-shell,
+  .sidebar-collapsed .main-shell {
+    padding-left: 1rem;
+  }
 }
 
 
@@ -203,21 +226,18 @@ body::after {
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
-.sidebar-expanded main {
-  margin-left: 16rem; /* w-64 */
-  transition: margin-left 0.3s ease-in-out;
-}
-
-.sidebar-collapsed main {
-  margin-left: 4rem; /* w-16 */
-  transition: margin-left 0.3s ease-in-out;
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: #05080f;
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: rgba(103, 232, 249, 0.28);
+    color: #e6f7ff;
   }
 }

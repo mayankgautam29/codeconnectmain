@@ -15,12 +15,12 @@ export default function WavyBackground() {
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      particles = Array.from({ length: 60 }, () => ({
+      particles = Array.from({ length: 42 }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        r: Math.random() * 2 + 1,
-        dx: (Math.random() - 0.5) * 0.5,
-        dy: (Math.random() - 0.5) * 0.5,
+        r: Math.random() * 2.4 + 0.8,
+        dx: (Math.random() - 0.5) * 0.25,
+        dy: (Math.random() - 0.5) * 0.25,
       }));
     };
 
@@ -30,7 +30,7 @@ export default function WavyBackground() {
       for (const p of particles) {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255, 255, 255, 0.07)";
+        ctx.fillStyle = "rgba(156, 211, 255, 0.11)";
         ctx.fill();
 
         p.x += p.dx;
@@ -53,15 +53,15 @@ export default function WavyBackground() {
       <motion.div
         className="fixed inset-0 z-[-2]"
         style={{
-          background: "linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #1e3a8a)",
+          background: "linear-gradient(150deg, #05080f 0%, #0b1220 45%, #09182d 100%)",
           backgroundSize: "300% 300%",
-          filter: "brightness(1.1) saturate(1.2)",
+          filter: "brightness(1.08) saturate(1.08)",
         }}
         animate={{
           backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
         }}
         transition={{
-          duration: 25,
+          duration: 32,
           repeat: Infinity,
           ease: "easeInOut",
         }}

@@ -25,32 +25,40 @@ export async function POST(request: NextRequest) {
       .populate("userId", "username profileImg") // populate username, profileImg of post creator
       .populate("likedBy", "_id"); // only need _id to check likes
 
-    // Format posts for frontend
-    const combinedPosts = posts.map((post) => {
-      const liked =
-        mongoUser?.id &&
-        post.likedBy.some((likedUser: any) =>
-          likedUser._id.equals(mongoUser._id)
-        );
+    // Format posts for frontend (skip broken refs)
+    const combinedPosts = posts
+      .filter((post) => post.userId && typeof post.userId === "object")
+      .map((post) => {
+        const user = post.userId as {
+          _id: { toString: () => string };
+          username: string;
+          profileImg: string;
+        };
+        const liked =
+          mongoUser?.id &&
+          post.likedBy.some((likedUser: { _id: { equals: (id: unknown) => boolean } }) =>
+            likedUser._id.equals(mongoUser._id)
+          );
 
-      return {
-        _id: post._id,
-        imageUrl: post.imageUrl,
-        caption: post.caption,
-        createdAt: post.createdAt,
-        likes: post.likes,
-        liked: !!liked,
-        user: {
-          userId: post.userId._id.toString(),
-          username: post.userId.username,
-          profileImg: post.userId.profileImg,
-        },
-      };
-    });
+        return {
+          _id: post._id,
+          imageUrl: post.imageUrl,
+          caption: post.caption,
+          createdAt: post.createdAt,
+          likes: post.likes,
+          liked: !!liked,
+          user: {
+            userId: user._id.toString(),
+            username: user.username,
+            profileImg: user.profileImg,
+          },
+        };
+      });
 
     return NextResponse.json({ posts: combinedPosts, usrId });
-  } catch (error: any) {
-    console.error("❌ Error in /api/main:", error.message);
-    return NextResponse.json({ posts: [] }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("❌ Error in /api/main:", message);
+    return NextResponse.json({ posts: [], usrId: "", error: message }, { status: 500 });
   }
 }
