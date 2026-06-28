@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { MessageCircle, Inbox } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { formatRelativeTime } from "@/lib/time";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -69,17 +69,7 @@ export default function MessagePage() {
   }, [userId]);
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="size-10 rounded-xl bg-cyan-400/15 flex items-center justify-center">
-          <Inbox className="size-5 text-cyan-300" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white">Messages</h1>
-          <p className="text-white/50 text-sm">Your conversations</p>
-        </div>
-      </div>
-
+    <div className="max-w-lg mx-auto">
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -104,7 +94,7 @@ export default function MessagePage() {
               <li key={otherId}>
                 <Link
                   href={`/messages/${otherId}`}
-                  className="flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-white/[0.04] hover:border-cyan-300/25 hover:bg-white/[0.06] transition group"
+                  className="flex items-center gap-4 p-3.5 rounded-xl glass-card hover:border-cyan-400/20 transition group"
                 >
                   <Image
                     src={
@@ -137,7 +127,7 @@ export default function MessagePage() {
           })}
         </ul>
       ) : (
-        <div className="text-center py-16 rounded-2xl border border-white/10 bg-white/[0.04]">
+        <div className="text-center py-16 glass-card">
           <MessageCircle className="size-10 mx-auto mb-3 text-white/25" />
           <p className="text-white/50">No conversations yet</p>
           <p className="text-white/35 text-sm mt-1">
