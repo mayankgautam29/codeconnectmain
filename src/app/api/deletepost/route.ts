@@ -1,6 +1,7 @@
 import { connect } from "@/dbconfig/dbconfig";
 import Post from "@/models/postModel";
 import { NextRequest, NextResponse } from "next/server";
+import { invalidateFeedCache, invalidateProfileCache, invalidateStatsCache } from "@/lib/cache";
 
 export async function DELETE(request: NextRequest) {
   await connect();
@@ -24,6 +25,8 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
 
-  console.log("Deleted post with id:", id);
+  await invalidateFeedCache();
+  await invalidateStatsCache();
+  if (post.userId) await invalidateProfileCache(post.userId.toString());
   return NextResponse.json({ success: true, data: post });
 }

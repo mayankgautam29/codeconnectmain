@@ -1,68 +1,65 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import axios from "axios";
-import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselPrevious,
-  CarouselNext,
-} from "@/components/ui/carousel";
+import { PostCard, type PostData } from "@/components/PostCard";
+import { FeedSkeleton } from "@/components/FeedSkeleton";
+import { StatsBar } from "@/components/StatsBar";
+import { Button } from "@/components/ui/button";
+import { Flame, Clock, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-interface Post {
-  _id?: string;
-  imageUrl: string[];
-  caption: string;
-  createdAt?: string | Date;
-  likes?: number;
-  liked?: boolean;
-  user: {
-    userId: string;
-    username: string;
-    profileImg: string;
-  };
-}
+type SortMode = "newest" | "likes";
 
 export default function HomePage() {
-  const [data, setData] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<PostData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [userId, setUserId] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [sort, setSort] = useState<SortMode>("newest");
   const router = useRouter();
 
-  useEffect(() => {
-    const getData = async () => {
+  const fetchPosts = useCallback(
+    async (pageNum: number, sortMode: SortMode, append = false) => {
       try {
-        setLoading(true);
-        const res = await axios.post("/api/main");
-        setData(res.data.posts || []);
-        setUserId(res.data.usrId);
+        if (append) setLoadingMore(true);
+        else setLoading(true);
+
+        const res = await axios.post("/api/main", { page: pageNum, sort: sortMode });
+        const posts: PostData[] = res.data.posts || [];
+
+        setData((prev) => (append ? [...prev, ...posts] : posts));
+        setUserId(res.data.usrId || "");
+        setHasMore(res.data.hasMore ?? false);
+        setPage(pageNum);
       } catch (err) {
         console.error("Error fetching posts:", err);
-        setData([]);
+        if (!append) setData([]);
       } finally {
         setLoading(false);
+        setLoadingMore(false);
       }
-    };
-    getData();
-  }, []);
+    },
+    []
+  );
+
+  useEffect(() => {
+    fetchPosts(1, sort);
+  }, [sort, fetchPosts]);
 
   const handleDelete = async (id: string) => {
     const res = await fetch("/api/deletepost", {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
 
-    const result = await res.json();
-    setData((prev) => prev.filter((post) => post._id !== id));
-    router.push("/");
+    if (res.ok) {
+      setData((prev) => prev.filter((post) => post._id !== id));
+    }
   };
 
   const handleLike = async (id: string) => {
@@ -70,7 +67,7 @@ export default function HomePage() {
 
     const res = await fetch("/api/postlike", {
       method: "POST",
-      headers: { "Content-type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
 
@@ -86,106 +83,92 @@ export default function HomePage() {
     );
   };
 
+  const handleRefresh = () => fetchPosts(1, sort);
+  const handleLoadMore = () => fetchPosts(page + 1, sort, true);
+
   return (
     <div className="max-w-6xl mx-auto">
-      {loading ? (
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-lg font-medium text-white/80 backdrop-blur-md">
-          Loading posts...
+      <StatsBar />
+
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 max-w-2xl mx-auto">
+        <div className="flex rounded-full border border-white/10 bg-white/[0.04] p-1">
+          <button
+            onClick={() => setSort("newest")}
+            className={cn(
+              "flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition",
+              sort === "newest"
+                ? "bg-cyan-400/20 text-cyan-100 border border-cyan-300/30"
+                : "text-white/60 hover:text-white"
+            )}
+          >
+            <Clock size={14} />
+            Latest
+          </button>
+          <button
+            onClick={() => setSort("likes")}
+            className={cn(
+              "flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition",
+              sort === "likes"
+                ? "bg-fuchsia-400/20 text-fuchsia-100 border border-fuchsia-300/30"
+                : "text-white/60 hover:text-white"
+            )}
+          >
+            <Flame size={14} />
+            Trending
+          </button>
         </div>
-      ) : Array.isArray(data) && data.length > 0 ? (
+
+        <button
+          onClick={handleRefresh}
+          disabled={loading}
+          className="flex items-center gap-1.5 text-sm text-white/60 hover:text-cyan-200 transition disabled:opacity-50"
+        >
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+          Refresh
+        </button>
+      </div>
+
+      {loading ? (
+        <FeedSkeleton />
+      ) : data.length > 0 ? (
         <div className="space-y-8 md:space-y-10">
           {data.map((post) => (
-            <div
+            <PostCard
               key={post._id}
-              className="max-w-2xl mx-auto rounded-[1.6rem] overflow-hidden border border-white/10 bg-white/[0.045] backdrop-blur-xl shadow-[0_24px_60px_rgba(0,0,0,0.45)] transition-all duration-300 hover:border-cyan-300/30"
-            >
-              <div className="p-5 md:p-6 space-y-5 md:space-y-6">
-                <Link href={`/profile/${post.user.userId}`}>
-                  <div className="flex items-center gap-3 hover:opacity-90 transition">
-                    <Image
-                      src={post.user.profileImg}
-                      alt="profile"
-                      width={46}
-                      height={46}
-                      className="rounded-full border border-white/20 shadow-[0_10px_24px_rgba(0,0,0,0.3)]"
-                    />
-                    <div>
-                      <p className="text-base md:text-lg font-semibold text-white">
-                        {post.user.username}
-                      </p>
-                      <p className="text-xs text-white/55">Creator</p>
-                    </div>
-                  </div>
-                </Link>
-                <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-inner">
-                  <Carousel className="w-full h-full">
-                    <CarouselContent className="h-full">
-                      {post.imageUrl.map((url, idx) => (
-                        <CarouselItem
-                          key={idx}
-                          className="w-full h-[300px] relative"
-                        >
-                          {url.endsWith(".mp4") ? (
-                            <video
-                              className="w-full h-full object-cover rounded-2xl"
-                              controls
-                            >
-                              <source src={url} type="video/mp4" />
-                            </video>
-                          ) : (
-                            <div className="relative w-full h-full">
-                              <Image
-                                src={url}
-                                alt={`media-${idx}`}
-                                fill
-                                sizes="100%"
-                                className="object-cover rounded-2xl"
-                              />
-                            </div>
-                          )}
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    <CarouselPrevious className="absolute top-1/2 -translate-y-1/2 left-3 z-10 bg-black/35 border-white/15 text-white hover:bg-black/60" />
-                    <CarouselNext className="absolute top-1/2 -translate-y-1/2 right-3 z-10 bg-black/35 border-white/15 text-white hover:bg-black/60" />
-                  </Carousel>
-                </div>
-                <p className="text-sm text-white/80 leading-relaxed">
-                  {post.user.username}: {post.caption}
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <p className="text-cyan-200/90 font-medium text-sm">
-                    {post.likes ?? 0} likes
-                  </p>
-                  <Button
-                    className={`rounded-full px-6 py-2 text-sm font-semibold shadow-md transition-all duration-300 ${
-                      post.liked
-                        ? "bg-gradient-to-tr from-fuchsia-500 to-cyan-500 text-white hover:brightness-110"
-                        : "border border-cyan-300/40 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-300/20"
-                    }`}
-                    onClick={() => handleLike(post._id!)}
-                  >
-                    {post.liked ? "Unlike" : "Like"}
-                  </Button>
-                </div>
-                {post._id && post.user.userId === userId && (
-                  <div className="text-right pt-2">
-                    <Button
-                      className="bg-rose-600/90 hover:bg-rose-600 text-white px-4 py-1 rounded-full text-sm shadow-md"
-                      onClick={() => handleDelete(post._id!)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
+              post={post}
+              currentUserId={userId}
+              onLike={handleLike}
+              onDelete={handleDelete}
+            />
           ))}
+
+          {hasMore && (
+            <div className="text-center pt-4">
+              <Button
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="rounded-full px-8 bg-white/10 hover:bg-white/15 border border-white/15 text-white"
+              >
+                {loadingMore ? "Loading..." : "Load more posts"}
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
-        <p className="text-center text-white/45 text-lg mt-20">
-          No posts to display.
-        </p>
+        <div className="text-center py-20 max-w-md mx-auto">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-10 backdrop-blur-md">
+            <p className="text-2xl font-semibold text-white mb-2">No posts yet</p>
+            <p className="text-white/50 text-sm mb-6">
+              Be the first to share your work with the community.
+            </p>
+            <Button
+              onClick={() => router.push("/create-post")}
+              className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:brightness-110"
+            >
+              Create your first post
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

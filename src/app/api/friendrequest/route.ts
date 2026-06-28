@@ -3,6 +3,12 @@ import FriendRequest from "@/models/friendrequestModel";
 import User from "@/models/userModel";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import { cacheDel, CACHE_KEYS } from "@/lib/cache";
+
+async function invalidateRequestCount(userMongoId: string) {
+  await cacheDel(CACHE_KEYS.requestCount(userMongoId));
+}
+
 export async function POST(request: NextRequest) {
   await connect();
   const { id } = await request.json();
@@ -36,6 +42,7 @@ export async function POST(request: NextRequest) {
   });
 
   const saved = await newRequest.save();
+  await invalidateRequestCount(id);
   return NextResponse.json({ saved });
 }
 
@@ -63,5 +70,6 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
+  await invalidateRequestCount(id);
   return NextResponse.json({ message: "Request withdrawn" });
 }

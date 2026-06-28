@@ -3,6 +3,7 @@ import Post from "@/models/postModel";
 import User from "@/models/userModel";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import { invalidateFeedCache } from "@/lib/cache";
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     await post.save();
+    await invalidateFeedCache();
 
     return NextResponse.json({
       updatedLikes: post.likes,

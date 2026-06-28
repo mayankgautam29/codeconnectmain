@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import cloudinary from "@/utils/cloudinary";
 import { connect } from "@/dbconfig/dbconfig";
-import Post from "@/models/postModel";
 import { auth } from "@clerk/nextjs/server";
 import User from "@/models/userModel";
+import { invalidateFeedCache, invalidateProfileCache } from "@/lib/cache";
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "20mb",
-    },
-  },
-};
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,7 +29,10 @@ export async function POST(req: NextRequest) {
       { userId },
       { profileImg: result.secure_url }
     );
-    console.log("Profile image updated");
+    if (updated) {
+      await invalidateFeedCache();
+      await invalidateProfileCache(updated._id.toString());
+    }
     return NextResponse.json({ url: result.secure_url });
   } catch (err: any) {
     console.error("Upload error:", err);

@@ -18,21 +18,28 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SignOutButton } from "@clerk/nextjs";
 import axios from "axios";
+import { Badge } from "@/components/ui/badge";
 
 export function ResponsiveSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [user, setUser] = useState(false);
+  const [requestCount, setRequestCount] = useState(0);
   const pathname = usePathname();
 
   useEffect(() => {
     setIsCollapsed(typeof window !== "undefined" ? window.innerWidth < 1280 : true);
     const getUser = async () => {
       try {
-        const response = await axios.get("/api/sidebar");
-        const { userId } = response.data;
+        const [sidebarRes, countRes] = await Promise.all([
+          axios.get("/api/sidebar"),
+          axios.get("/api/requestcount").catch(() => ({ data: { count: 0 } })),
+        ]);
+        const { userId } = sidebarRes.data;
         setUser(!!userId);
-      } catch (err) {
+        setRequestCount(countRes.data.count ?? 0);
+      } catch {
         setUser(false);
+        setRequestCount(0);
       }
     };
     getUser();
@@ -102,6 +109,7 @@ export function ResponsiveSidebar() {
             icon={<UserRound size={18} />}
             collapsed={isCollapsed}
             pathname={pathname}
+            badge={requestCount > 0 ? requestCount : undefined}
           />
           <SidebarLink
             href="/messages"
@@ -191,9 +199,10 @@ type SidebarLinkProps = {
   icon: React.ReactNode;
   collapsed: boolean;
   pathname: string;
+  badge?: number;
 };
 
-function SidebarLink({ href, label, icon, collapsed, pathname }: SidebarLinkProps) {
+function SidebarLink({ href, label, icon, collapsed, pathname, badge }: SidebarLinkProps) {
   const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
@@ -208,17 +217,31 @@ function SidebarLink({ href, label, icon, collapsed, pathname }: SidebarLinkProp
       )}
       title={collapsed ? label : undefined}
     >
-      <span
-        className={cn(
-          "grid place-items-center size-9 rounded-xl transition",
-          isActive
-            ? "bg-cyan-300/15 text-cyan-200"
-            : "bg-white/[0.035] text-white/80 group-hover:bg-white/10 group-hover:text-white"
+      <span className="relative">
+        <span
+          className={cn(
+            "grid place-items-center size-9 rounded-xl transition",
+            isActive
+              ? "bg-cyan-300/15 text-cyan-200"
+              : "bg-white/[0.035] text-white/80 group-hover:bg-white/10 group-hover:text-white"
+          )}
+        >
+          {icon}
+        </span>
+        {badge !== undefined && badge > 0 && (
+          <span className="absolute -top-1 -right-1 size-4 rounded-full bg-rose-500 text-[10px] font-bold text-white grid place-items-center">
+            {badge > 9 ? "9+" : badge}
+          </span>
         )}
-      >
-        {icon}
       </span>
-      {!collapsed && <span className="font-medium tracking-[0.01em]">{label}</span>}
+      {!collapsed && (
+        <span className="font-medium tracking-[0.01em] flex-1">{label}</span>
+      )}
+      {!collapsed && badge !== undefined && badge > 0 && (
+        <Badge className="bg-rose-500/20 text-rose-300 border-rose-400/30 text-[10px]">
+          {badge}
+        </Badge>
+      )}
     </Link>
   );
 }

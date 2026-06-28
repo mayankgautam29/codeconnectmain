@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
+import { Search, UserRound } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface User {
   _id: string;
@@ -16,71 +18,106 @@ export default function SearchUserPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
 
-  const handleSearch = async () => {
-    if (!query.trim()) return;
+  const handleSearch = useCallback(async (q: string) => {
+    if (!q.trim() || q.trim().length < 2) {
+      setResults([]);
+      setSearched(false);
+      return;
+    }
     setLoading(true);
+    setSearched(true);
     try {
-      const res = await axios.get(`/api/searchuser?q=${query}`);
+      const res = await axios.get(`/api/searchuser?q=${encodeURIComponent(q)}`);
       setResults(res.data.users);
     } catch (error) {
       console.error("Search failed", error);
+      setResults([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => handleSearch(query), 400);
+    return () => clearTimeout(timer);
+  }, [query, handleSearch]);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10 text-white">
-      <h1 className="text-3xl font-bold mb-6 text-center">Search Users</h1>
-      <div className="flex gap-2 mb-6">
-        <input
-          type="text"
-          placeholder="Search by username or email"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          className="flex-1 px-4 py-2 text-sm rounded bg-zinc-800 border border-zinc-600 focus:outline-none"
-        />
-        <button
-          onClick={handleSearch}
-          className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white"
-        >
-          {loading ? "Searching..." : "Search"}
-        </button>
+    <div className="max-w-2xl mx-auto">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-white">Explore Builders</h1>
+        <p className="text-white/50 text-sm mt-2">
+          Find developers by username or email
+        </p>
       </div>
 
-      {results.length > 0 ? (
-        <ul className="space-y-4">
-          {results.map((user) => (
-            <li
-              key={user._id}
-              className="flex items-center gap-4 p-3 bg-zinc-900 border border-zinc-700 rounded-lg"
+      <div className="relative mb-8">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-white/40" />
+        <input
+          type="text"
+          placeholder="Search by username or email..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full pl-11 pr-4 py-3.5 text-sm rounded-2xl bg-white/[0.06] border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:border-cyan-300/40 focus:ring-1 focus:ring-cyan-300/20 transition"
+        />
+      </div>
+
+      {loading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-white/[0.04]"
             >
-              <Image
-                src={user.profileImg}
-                alt={user.username}
-                width={50}
-                height={50}
-                className="rounded-full object-cover"
-              />
-              <div>
-                <p className="font-semibold">{user.username}</p>
-                <Link
-                  href={`/profile/${user._id}`}
-                  className="text-xs text-purple-400 underline"
-                >
-                  View Profile
-                </Link>
+              <Skeleton className="size-12 rounded-full bg-white/10" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-32 bg-white/10" />
+                <Skeleton className="h-3 w-48 bg-white/10" />
               </div>
+            </div>
+          ))}
+        </div>
+      ) : results.length > 0 ? (
+        <ul className="space-y-3">
+          {results.map((user) => (
+            <li key={user._id}>
+              <Link
+                href={`/profile/${user._id}`}
+                className="flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-white/[0.04] hover:border-cyan-300/25 hover:bg-white/[0.06] transition group"
+              >
+                <Image
+                  src={user.profileImg}
+                  alt={user.username}
+                  width={48}
+                  height={48}
+                  className="rounded-full object-cover border border-white/15"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-white group-hover:text-cyan-100 transition">
+                    {user.username}
+                  </p>
+                  <p className="text-xs text-white/45 truncate">{user.email}</p>
+                </div>
+                <UserRound className="size-4 text-white/30 group-hover:text-cyan-300/70 transition" />
+              </Link>
             </li>
           ))}
         </ul>
       ) : (
-        !loading &&
-        query && (
-          <p className="text-center text-gray-400">No users found.</p>
+        searched &&
+        query.length >= 2 && (
+          <p className="text-center text-white/45 py-12">
+            No users found for &ldquo;{query}&rdquo;
+          </p>
         )
+      )}
+
+      {!searched && !query && (
+        <p className="text-center text-white/35 text-sm py-12">
+          Start typing to search the community
+        </p>
       )}
     </div>
   );

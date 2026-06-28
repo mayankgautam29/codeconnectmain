@@ -5,14 +5,10 @@ import Post from "@/models/postModel";
 import { auth } from "@clerk/nextjs/server";
 import User from "@/models/userModel";
 import type { UploadApiResponse } from "cloudinary";
+import { invalidateFeedCache, invalidateProfileCache, invalidateStatsCache } from "@/lib/cache";
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "50mb",
-    },
-  },
-};
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,6 +48,9 @@ export async function POST(req: NextRequest) {
       caption,
     });
     await newPost.save();
+    await invalidateFeedCache();
+    await invalidateProfileCache(user._id.toString());
+    await invalidateStatsCache();
 
     return NextResponse.json({ urls }, { status: 200 });
 

@@ -3,6 +3,7 @@ import { connect } from "@/dbconfig/dbconfig";
 import FriendRequest from "@/models/friendrequestModel";
 import User from "@/models/userModel";
 import { NextRequest, NextResponse } from "next/server";
+import { cacheDel, CACHE_KEYS, invalidateProfileCache } from "@/lib/cache";
 
 export async function PATCH(req: NextRequest) {
   try {
@@ -27,6 +28,10 @@ export async function PATCH(req: NextRequest) {
         $addToSet: { friends: request.reqBy },
       });
     }
+
+    await cacheDel(CACHE_KEYS.requestCount(request.reqTo.toString()));
+    await invalidateProfileCache(request.reqBy.toString());
+    await invalidateProfileCache(request.reqTo.toString());
 
     return NextResponse.json({ success: true, updated: request });
   } catch (err) {

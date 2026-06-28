@@ -16,8 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Code-Connect",
-  description: "Made by Mayank Gautam",
+  title: "CodeConnect — Developer Social Network",
+  description: "Connect, showcase, and discover builders. Share your projects, find developers, and chat in real-time.",
+  keywords: ["developers", "social network", "code", "portfolio", "community"],
 };
 
 export default function RootLayout({
@@ -37,13 +38,15 @@ export default function RootLayout({
             <ResponsiveSidebar />
 
             <main className="main-shell min-h-screen px-4 pt-5 pb-24 md:pb-8 md:px-8 lg:px-10">
-              <header className="mb-6 md:mb-8">
-                <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white">
-                  CodeConnect
-                </h1>
-                <p className="text-sm md:text-base text-white/60 mt-1">
-                  Connect, showcase, and discover builders.
-                </p>
+              <header className="mb-6 md:mb-8 flex items-end justify-between">
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white">
+                    CodeConnect
+                  </h1>
+                  <p className="text-sm md:text-base text-white/60 mt-1">
+                    Connect, showcase, and discover builders.
+                  </p>
+                </div>
               </header>
               {children}
             </main>
