@@ -3,15 +3,12 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselPrevious,
-  CarouselNext,
-} from "@/components/ui/carousel";
+import { MediaViewer } from "@/components/MediaViewer";
+import { formatRelativeTime } from "@/lib/time";
+import { UserCheck, UserPlus, UserMinus } from "lucide-react";
 
 interface ProfilePgProps {
   usermId: string;
@@ -68,7 +65,7 @@ export default function ProfilePg({ usermId, clerkId }: ProfilePgProps) {
     getData().then(() => {
       if (clerkId !== usermId) checkStatus();
     });
-  }, [usermId, clerkId]);
+  }, [usermId, clerkId, router]);
 
   const handleFriendRequest = async (id: string) => {
     setLoading(true);
@@ -96,132 +93,85 @@ export default function ProfilePg({ usermId, clerkId }: ProfilePgProps) {
     }
   };
 
-  const formattedDate = user?.createdAt
-    ? new Date(user.createdAt).toLocaleString("en-IN", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "";
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="max-w-4xl mx-auto p-6 mt-12 text-white space-y-10"
+      className="max-w-2xl mx-auto space-y-6"
     >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="bg-gradient-to-br from-[#1e1e2f] to-[#2a2a40] rounded-2xl p-8 shadow-xl text-center space-y-4"
-      >
+      <div className="glass-card p-6 md:p-8 text-center">
         {user?.profileImg && (
-          <img
+          <Image
             src={user.profileImg}
-            alt="Profile"
-            className="w-36 h-36 mx-auto rounded-full border-4 border-white shadow-md object-cover"
+            alt={user.username}
+            width={112}
+            height={112}
+            className="rounded-full border-4 border-white/15 ring-4 ring-cyan-400/10 object-cover mx-auto mb-4"
           />
         )}
-        <h2 className="mt-4 text-2xl font-bold">{user?.username}</h2>
+        <h2 className="text-2xl font-bold text-white">{user?.username}</h2>
+        {user?.createdAt && (
+          <p className="text-xs text-white/40 mt-2">
+            Joined {formatRelativeTime(user.createdAt)}
+          </p>
+        )}
 
         {!isOwnProfile && (
-          requestStatus === "friends" ? (
-            <p className="text-green-500 font-medium">Already Friends</p>
-          ) : requestStatus === "pending" ? (
-            <Button
-              onClick={() => handleWithdrawRequest(usermId)}
-              disabled={loading}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-xl shadow-md transition-all duration-200"
-            >
-              {loading ? "Withdrawing..." : "Withdraw Request"}
-            </Button>
-          ) : (
-            <Button
-              onClick={() => handleFriendRequest(usermId)}
-              disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-xl shadow-md transition-all duration-200"
-            >
-              {loading ? "Sending..." : "Send Friend Request"}
-            </Button>
-          )
-        )}
-
-        <p className="text-gray-400">
-          <span className="font-medium">Joined:</span> {formattedDate}
-        </p>
-
-        {isOwnProfile && (
-          <button
-            onClick={() => router.push("/uploadpfp")}
-            className="mt-4 bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2 rounded-full font-semibold shadow-lg hover:from-cyan-600 hover:to-blue-700 transition duration-300"
-          >
-            Change Profile Image
-          </button>
-        )}
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="bg-[#2a2a40] rounded-2xl p-6 shadow-lg"
-      >
-        <h3 className="text-xl font-bold mb-4 border-b border-gray-600 pb-2 text-center">Posts</h3>
-        {posts.length === 0 ? (
-          <p className="text-center text-gray-400">No posts yet.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {posts.map((post) => (
-              <motion.div
-                key={post._id}
-                whileHover={{ scale: 1.02 }}
-                className="bg-[#1e1e2f] rounded-lg p-4 shadow-md"
+          <div className="mt-5">
+            {requestStatus === "friends" ? (
+              <span className="inline-flex items-center gap-2 text-sm text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-xl">
+                <UserCheck size={16} />
+                Friends
+              </span>
+            ) : requestStatus === "pending" ? (
+              <Button
+                onClick={() => handleWithdrawRequest(usermId)}
+                disabled={loading}
+                variant="ghost"
+                className="rounded-xl text-white/60 hover:text-rose-300 hover:bg-rose-500/10"
               >
-                <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-white/10 shadow-inner">
-                  <Carousel className="w-full">
-                    <CarouselContent className="-ml-4">
-                      {post.imageUrl.map((url, idx) => (
-                        <CarouselItem key={idx} className="relative pl-4 basis-full">
-                          {url.endsWith(".mp4") ? (
-                            <video
-                              className="w-full h-48 object-cover rounded-xl"
-                              controls
-                            >
-                              <source src={url} type="video/mp4" />
-                            </video>
-                          ) : (
-                            <div className="relative w-full h-48">
-                              <img
-                                src={url}
-                                alt={`media-${idx}`}
-                                className="w-full h-48 object-cover rounded-xl"
-                              />
-                            </div>
-                          )}
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    <CarouselPrevious className="absolute top-1/2 -translate-y-1/2 left-2 z-10" />
-                    <CarouselNext className="absolute top-1/2 -translate-y-1/2 right-2 z-10" />
-                  </Carousel>
-                </div>
-                <p className="text-sm text-gray-300 mt-2">{post.caption}</p>
-                <p className="text-xs text-gray-500 text-right mt-1">
-                  {new Date(post.createdAt || "").toLocaleDateString("en-IN", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </p>
-              </motion.div>
+                <UserMinus size={16} className="mr-2" />
+                {loading ? "Withdrawing..." : "Withdraw Request"}
+              </Button>
+            ) : (
+              <Button
+                onClick={() => handleFriendRequest(usermId)}
+                disabled={loading}
+                className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:brightness-110"
+              >
+                <UserPlus size={16} className="mr-2" />
+                {loading ? "Sending..." : "Add Friend"}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="glass-card p-5">
+        <h3 className="font-semibold text-white mb-4">Posts</h3>
+        {posts.length === 0 ? (
+          <p className="text-center text-white/40 text-sm py-8">No posts yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {posts.map((post) => (
+              <div
+                key={post._id}
+                className="rounded-xl overflow-hidden border border-white/[0.06] bg-white/[0.02]"
+              >
+                <MediaViewer urls={post.imageUrl} alt={post.caption} variant="grid" />
+                {post.caption && (
+                  <p className="text-xs text-white/70 px-3 py-2 line-clamp-2">{post.caption}</p>
+                )}
+                {post.createdAt && (
+                  <p className="text-[10px] text-white/35 px-3 pb-2 text-right">
+                    {formatRelativeTime(post.createdAt)}
+                  </p>
+                )}
+              </div>
             ))}
           </div>
         )}
-      </motion.div>
+      </div>
     </motion.div>
   );
 }

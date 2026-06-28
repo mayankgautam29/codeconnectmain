@@ -26,11 +26,11 @@ export function StatsBar() {
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-3 mb-8 max-w-2xl mx-auto">
+    <div className="grid grid-cols-3 gap-2.5 mb-6">
       {items.map(({ label, value, icon: Icon }) => (
         <div
           key={label}
-          className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-4 py-3 text-center transition hover:border-cyan-300/25"
+          className="glass-card px-3 py-3 text-center"
         >
           <Icon className="size-4 mx-auto mb-1.5 text-cyan-300/80" />
           <p className="text-lg font-semibold text-white">{value.toLocaleString()}</p>

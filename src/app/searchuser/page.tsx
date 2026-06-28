@@ -45,22 +45,15 @@ export default function SearchUserPage() {
   }, [query, handleSearch]);
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-white">Explore Builders</h1>
-        <p className="text-white/50 text-sm mt-2">
-          Find developers by username or email
-        </p>
-      </div>
-
-      <div className="relative mb-8">
+    <div className="max-w-lg mx-auto">
+      <div className="relative mb-6">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-white/40" />
         <input
           type="text"
           placeholder="Search by username or email..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full pl-11 pr-4 py-3.5 text-sm rounded-2xl bg-white/[0.06] border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:border-cyan-300/40 focus:ring-1 focus:ring-cyan-300/20 transition"
+          className="w-full pl-11 pr-4 py-3.5 text-sm rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/35 focus:outline-none focus:border-cyan-400/30 focus:ring-1 focus:ring-cyan-400/15 transition"
         />
       </div>
 
@@ -85,7 +78,7 @@ export default function SearchUserPage() {
             <li key={user._id}>
               <Link
                 href={`/profile/${user._id}`}
-                className="flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-white/[0.04] hover:border-cyan-300/25 hover:bg-white/[0.06] transition group"
+                className="flex items-center gap-4 p-3.5 rounded-xl glass-card hover:border-cyan-400/20 transition group"
               >
                 <Image
                   src={user.profileImg}

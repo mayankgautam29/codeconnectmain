@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { io, Socket } from "socket.io-client";
 import axios from "axios";
 import Image from "next/image";
+import Link from "next/link";
+import { ArrowLeft, Send } from "lucide-react";
+import { formatRelativeTime } from "@/lib/time";
+import { cn } from "@/lib/utils";
 
 type Message = {
   text: string;
@@ -21,9 +25,11 @@ type TargetUser = {
 function getRoomId(userA: string, userB: string) {
   return [userA, userB].sort().join("_");
 }
+
 export default function MessagePage() {
   const { id: targetUserId } = useParams();
   const { userId } = useAuth();
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const [targetUserInfo, setTargetUserInfo] = useState<TargetUser | null>(null);
@@ -31,23 +37,16 @@ export default function MessagePage() {
   const messageEndRef = useRef<HTMLDivElement>(null);
 
   const roomId =
-    typeof targetUserId === "string" && userId
-      ? getRoomId(userId, targetUserId)
-      : "";
+    typeof targetUserId === "string" && userId ? getRoomId(userId, targetUserId) : "";
+
   useEffect(() => {
     const fetchPreviousMessages = async () => {
       if (!userId || typeof targetUserId !== "string") return;
-
       try {
-        const res = await axios.post("/api/getmessagesbetween", {
-          targetUserId,
-        });
-        const prevMessages = res.data.messages.map((msg: any) => ({
+        const res = await axios.post("/api/getmessagesbetween", { targetUserId });
+        const prevMessages = res.data.messages.map((msg: { text: string; senderId: string; time: string }) => ({
           text: msg.text,
-          sender:
-            msg.senderId === userId
-              ? "you"
-              : res.data.targetUser?.username || msg.senderId,
+          sender: msg.senderId === userId ? "you" : res.data.targetUser?.username || msg.senderId,
           time: msg.time,
         }));
         setMessages(prevMessages);
@@ -56,11 +55,9 @@ export default function MessagePage() {
         console.error("Failed to load previous messages:", error);
       }
     };
-
     fetchPreviousMessages();
   }, [userId, targetUserId]);
 
-  //socket
   useEffect(() => {
     if (!roomId || !userId || typeof targetUserId !== "string") return;
 
@@ -68,117 +65,113 @@ export default function MessagePage() {
       transports: ["websocket"],
       withCredentials: true,
     });
-
     socketRef.current = socket;
 
-    socket.on("connect", () => {
-      socket.emit("joinRoom", roomId);
-    });
+    socket.on("connect", () => socket.emit("joinRoom", roomId));
 
     socket.on("receiveMessage", ({ text, sender, time }) => {
-      const validTime =
-        time && !isNaN(new Date(time).getTime())
-          ? time
-          : new Date().toISOString();
-
+      const validTime = time && !isNaN(new Date(time).getTime()) ? time : new Date().toISOString();
       setMessages((prev) => [
         ...prev,
         {
           text,
-          sender:
-            sender === userId ? "you" : targetUserInfo?.username || sender,
+          sender: sender === userId ? "you" : targetUserInfo?.username || sender,
           time: validTime,
         },
       ]);
     });
 
-    return () => {
-      socket.disconnect();
-    };
+    return () => { socket.disconnect(); };
   }, [roomId, userId, targetUserId, targetUserInfo]);
 
   const handleSend = () => {
-    if (
-      !message.trim() ||
-      !socketRef.current ||
-      !roomId ||
-      !userId ||
-      typeof targetUserId !== "string"
-    )
-      return;
-
-    const msgData = {
+    if (!message.trim() || !socketRef.current || !roomId || !userId || typeof targetUserId !== "string") return;
+    socketRef.current.emit("sendMessage", {
       roomId,
       message: message.trim(),
       sender: userId,
       receiver: targetUserId,
-    };
-    socketRef.current.emit("sendMessage", msgData);
+    });
     setMessage("");
   };
+
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
-    <div className="p-4 max-w-xl mx-auto min-h-screen flex flex-col">
-      {targetUserInfo && (
-        <div className="flex items-center gap-3 mb-4">
-          <Image
-            src={targetUserInfo.profileImg}
-            alt={targetUserInfo.username}
-            width={50}
-            height={50}
-            className="rounded-full"
-          />
-          <h2 className="text-2xl font-bold text-white">
-            {targetUserInfo.username}
-          </h2>
-        </div>
-      )}
-
-      <div className="flex-1 overflow-y-auto border border-zinc-700 rounded-lg p-4 mb-4 bg-zinc-900 space-y-3 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${
-              msg.sender === "you" ? "justify-end" : "justify-start"
-            }`}
-          >
-            <div
-              className={`max-w-[70%] px-4 py-2 rounded-xl text-sm shadow-md ${
-                msg.sender === "you"
-                  ? "bg-purple-600 text-white rounded-br-none"
-                  : "bg-zinc-800 text-gray-200 rounded-bl-none"
-              }`}
-            >
-              <p className="whitespace-pre-wrap">{msg.text}</p>
-              <p className="text-xs mt-1 text-gray-400 text-right">
-                {new Date(msg.time).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
+    <div className="max-w-lg mx-auto flex flex-col h-[calc(100vh-10rem)] md:h-[calc(100vh-8rem)]">
+      {/* Chat header */}
+      <div className="glass-card flex items-center gap-3 px-4 py-3 mb-3 shrink-0">
+        <button
+          onClick={() => router.push("/messages")}
+          className="size-9 grid place-items-center rounded-lg text-white/50 hover:text-white hover:bg-white/[0.06] transition"
+        >
+          <ArrowLeft size={18} />
+        </button>
+        {targetUserInfo && (
+          <>
+            <Image
+              src={targetUserInfo.profileImg}
+              alt={targetUserInfo.username}
+              width={40}
+              height={40}
+              className="rounded-full border border-white/15 object-cover"
+            />
+            <div className="min-w-0">
+              <p className="font-semibold text-white truncate">{targetUserInfo.username}</p>
+              <p className="text-[11px] text-emerald-400/80">Online</p>
             </div>
-          </div>
-        ))}
+          </>
+        )}
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto glass-card p-4 mb-3 space-y-3 scrollbar-thin">
+        {messages.length === 0 && (
+          <p className="text-center text-white/35 text-sm py-12">
+            Say hello to start the conversation
+          </p>
+        )}
+        {messages.map((msg, i) => {
+          const isYou = msg.sender === "you";
+          return (
+            <div key={i} className={cn("flex", isYou ? "justify-end" : "justify-start")}>
+              <div
+                className={cn(
+                  "max-w-[78%] px-3.5 py-2.5 rounded-2xl text-sm",
+                  isYou
+                    ? "bg-gradient-to-br from-cyan-600 to-blue-600 text-white rounded-br-md"
+                    : "bg-white/[0.07] text-white/90 border border-white/[0.06] rounded-bl-md"
+                )}
+              >
+                <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
+                <p className={cn("text-[10px] mt-1 text-right", isYou ? "text-white/60" : "text-white/35")}>
+                  {formatRelativeTime(msg.time)}
+                </p>
+              </div>
+            </div>
+          );
+        })}
         <div ref={messageEndRef} />
       </div>
 
-      <div className="flex">
+      {/* Input */}
+      <div className="glass-card flex items-center gap-2 p-2 shrink-0">
         <input
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Type your message..."
-          className="flex-1 px-4 py-2 rounded-l-lg bg-zinc-800 text-white border border-zinc-600 focus:outline-none"
+          placeholder="Type a message..."
+          className="flex-1 bg-transparent px-3 py-2.5 text-sm text-white placeholder:text-white/35 focus:outline-none"
         />
         <button
           onClick={handleSend}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-r-lg"
+          disabled={!message.trim()}
+          className="size-10 grid place-items-center rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white disabled:opacity-40 hover:brightness-110 transition shrink-0"
         >
-          Send
+          <Send size={16} />
         </button>
       </div>
     </div>

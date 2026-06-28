@@ -69,12 +69,7 @@ export default function UploadCard() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-white">Create Post</h2>
-        <p className="text-white/50 text-sm mt-2">Share photos or videos with the community</p>
-      </div>
-
-      <div className="rounded-[1.6rem] border border-white/10 bg-white/[0.045] backdrop-blur-xl p-6 space-y-5">
+      <div className="glass-card p-5 md:p-6 space-y-5">
         <div
           {...getRootProps()}
           className={cn(

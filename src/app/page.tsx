@@ -87,10 +87,10 @@ export default function HomePage() {
   const handleLoadMore = () => fetchPosts(page + 1, sort, true);
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-xl mx-auto">
       <StatsBar />
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 max-w-2xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6">
         <div className="flex rounded-full border border-white/10 bg-white/[0.04] p-1">
           <button
             onClick={() => setSort("newest")}
@@ -131,7 +131,7 @@ export default function HomePage() {
       {loading ? (
         <FeedSkeleton />
       ) : data.length > 0 ? (
-        <div className="space-y-8 md:space-y-10">
+        <div className="space-y-6">
           {data.map((post) => (
             <PostCard
               key={post._id}
